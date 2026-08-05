@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>新聞摘要中心 — 美股 × 國際情勢</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --text: #1a1d23;
+    --muted: #6b7280;
+    --accent: #b91c1c;
+    --accent-soft: #fef2f2;
+    --border: #e5e7eb;
+    --up: #16803c;
+    --down: #b91c1c;
+    --tab-bg: #e9eaed;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --card: #1e2126;
+      --text: #e8e9ec;
+      --muted: #9aa0aa;
+      --accent: #f87171;
+      --accent-soft: #2a1a1a;
+      --border: #2c2f36;
+      --up: #4ade80;
+      --down: #f87171;
+      --tab-bg: #24272d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Microsoft JhengHei", "PingFang TC", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 32px 16px 80px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  header { margin-bottom: 20px; }
+  header h1 { font-size: 24px; margin: 0 0 4px; }
+  header .sub { color: var(--muted); font-size: 13px; }
+
+  /* Tabs */
+  .tabbar {
+    display: flex;
+    gap: 6px;
+    background: var(--tab-bg);
+    padding: 6px;
+    border-radius: 12px;
+    margin: 20px 0 24px;
+    overflow-x: auto;
+  }
+  .tabbtn {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s, color .15s;
+  }
+  .tabbtn:hover { color: var(--text); }
+  .tabbtn.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fade .18s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .period-title { font-size: 15px; color: var(--muted); margin-bottom: 16px; }
+
+  .tldr {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .tldr h2 { margin: 0 0 10px; font-size: 16px; color: var(--accent); }
+  .tldr ul { margin: 0; padding-left: 20px; }
+  .tldr li { margin-bottom: 6px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 17px; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+  .card h3 { font-size: 14px; margin: 16px 0 6px; color: var(--muted); }
+  .card p { margin: 6px 0; }
+  .card ul { margin: 6px 0; padding-left: 20px; }
+  .card li { margin-bottom: 6px; }
+
+  .index-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .index-box { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .index-box .name { font-size: 13px; color: var(--muted); }
+  .index-box .val { font-size: 20px; font-weight: 700; margin: 2px 0; }
+  .index-box .chg.up { color: var(--up); }
+  .index-box .chg.down { color: var(--down); }
+
+  table.daytable { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0 4px; }
+  table.daytable th, table.daytable td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  table.daytable th { color: var(--muted); font-weight: 600; }
+  table.daytable td.up { color: var(--up); }
+  table.daytable td.down { color: var(--down); }
+
+  .quote { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--muted); font-style: italic; margin: 10px 0; }
+
+  .sources { font-size: 13px; color: var(--muted); }
+  .sources a { color: var(--muted); }
+  .sources ol { padding-left: 20px; }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>📰 新聞摘要中心：美股 × 國際情勢</h1>
+    <div class="sub">切換分頁查看每日／每周／每月／每季／半年摘要　·　產生時間：2026/08/03</div>
+  </header>
+
+  <nav class="tabbar" id="tabbar">
+    <button class="tabbtn active" data-tab="daily">每日</button>
+    <button class="tabbtn" data-tab="weekly">每周</button>
+    <button class="tabbtn" data-tab="monthly">每月</button>
+    <button class="tabbtn" data-tab="quarterly">每季</button>
+    <button class="tabbtn" data-tab="halfyear">半年</button>
+  </nav>
+
+  <!-- ============ 每日 ============ -->
+  <section class="panel active" id="panel-daily">
+    <div class="period-title">2026 年 8 月 3 日（星期一）</div>
+
+    <div class="tldr">
+      <h2>📌 重點摘錄</h2>
+      <ul>
+        <li>美股三大指數同步大漲：道瓊創收盤新高，S&amp;P 500、那斯達克在科技股帶動下走強。</li>
+        <li>川普宣布喊停對伊朗的「大規模攻擊」，市場風險情緒回升，油價同步下跌。</li>
+        <li>美伊談判本週一登場，川普稱重開荷莫茲海峽、伊朗去核化的協議「近在眼前」，但隨後語氣轉硬，稱伊朗「非常虛偽」。</li>
+        <li>Fed 連續五次會議按兵不動（利率維持 3.50%–3.75%），但有三位官員主張升息，9 月會議仍有變數。</li>
+        <li>加薩衝突未歇：以色列空襲造成至少 25 名巴勒斯坦人死亡；川普稱以色列對新的加薩撤軍／哈瑪斯解除武裝方案「非常滿意」，但以方部長公開反對。</li>
+        <li>埃及蘇伊士外海發生規模 5.3 地震；古巴電網再度全國性跳電；俄羅斯指控烏克蘭涉入莫斯科餐廳爆炸案。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>📈 今日美股</h2>
+      <div class="index-grid">
+        <div class="index-box"><div class="name">道瓊工業指數</div><div class="val">53,178.41</div><div class="chg up">▲ 693.38 (+1.32%)　收盤新高</div></div>
+        <div class="index-box"><div class="name">S&amp;P 500</div><div class="val">7,600.50</div><div class="chg up">▲ +1.48%</div></div>
+        <div class="index-box"><div class="name">那斯達克綜合指數</div><div class="val">25,913.9</div><div class="chg up">▲ +2.1%</div></div>
+      </div>
+      <h3>驅動因素</h3>
+      <p>道瓊創收盤歷史新高，主因是川普宣布取消原訂對伊朗的軍事打擊計畫，油價隨之下跌，激勵市場風險偏好。科技與通訊服務股是本輪上漲主力：Meta 大漲 6%、Nvidia 上漲近 3%、Alphabet 與 Microsoft 各漲約 5%。</p>
+      <h3>總經背景</h3>
+      <p>Fed 在 7 月會議上維持利率於 3.50%–3.75% 不變，已連續五次按兵不動，但三位 FOMC 成員主張升息 25 個基點。美國 6 月通膨降至 3.5%，為五個月來首次回落；就業市場穩定，企業生產力與資本支出維持強勁。</p>
+    </div>
+
+    <div class="card">
+      <h2>🇺🇸 美國總統動態（川普）</h2>
+      <h3>伊朗情勢</h3>
+      <p>川普週六晚間宣布取消原定對伊朗的攻擊計畫，美伊談判於本週一展開。他稱重開荷莫茲海峽航運、促成伊朗去核化的協議「近在眼前」。</p>
+      <div class="quote">「伊朗領導層極度虛偽狡詐！」— 川普於 Truth Social</div>
+      <p>他向記者表示願給伊朗「最後一次機會」：「在（採取強硬手段）之前，我想給他們最後的機會，這（動武）非常不容易做。」伊朗官方否認正在談判，但證實與斡旋方有接觸。</p>
+      <h3>加薩問題</h3>
+      <p>川普表示以色列對新方案「非常滿意」（哈瑪斯解除武裝、以色列自加薩撤軍），但以色列政府堅持須「真正」解除武裝才願撤出目前控制線，國家安全部長本－格維爾稱方案「不可接受」。</p>
+    </div>
+
+    <div class="card">
+      <h2>🌍 國際新聞重點</h2>
+      <ul>
+        <li><strong>中東／伊朗：</strong>上週五伊朗革命衛隊在美軍護航下攻擊兩艘欲通過荷莫茲海峽的油輪，情勢急遽升高，美方隨後喊停軍事行動、轉向談判。</li>
+        <li><strong>加薩：</strong>週末以色列空襲造成至少 25 名巴勒斯坦人死亡。</li>
+        <li><strong>俄烏戰爭：</strong>俄羅斯駐羅馬大使館指控烏克蘭涉入莫斯科一間餐廳的致命爆炸案。</li>
+        <li><strong>自然災害：</strong>埃及蘇伊士市東北外海發生規模 5.3 地震（USGS）。</li>
+        <li><strong>古巴：</strong>國家電網再度故障，全國停電。</li>
+      </ul>
+    </div>
+
+    <div class="card sources">
+      <h2>🔗 資料來源</h2>
+      <ol>
+        <li><a href="https://www.cnbc.com/2026/08/02/stock-market-today-live-updates.html" target="_blank">CNBC — Stock market news for Aug. 3, 2026</a></li>
+        <li><a href="https://finance.yahoo.com/markets/live/stock-market-today-monday-august-3-dow-sp-500-nasdaq-big-tech-oil-092516872.html" target="_blank">Yahoo Finance — Dow hits record high</a></li>
+        <li><a href="https://www.cbsnews.com/live-updates/iran-war-us-trump-strait-of-hormuz-kuwait-jordan-air-base/" target="_blank">CBS News — U.S.-Iran negotiations set to begin Monday</a></li>
+        <li><a href="https://www.foxnews.com/live-news/iran-war-news-trump-israel-august-3" target="_blank">Fox News — Trump claims Iran deal 'imminent'</a></li>
+        <li><a href="https://www.cnn.com/2026/08/02/world/live-news/iran-war-trump" target="_blank">CNN — Trump warns Iran of 'last chance'</a></li>
+        <li><a href="https://havanatimes.org/news/international-news-briefs-for-friday-august-3-2026/" target="_blank">Havana Times — International News Briefs</a></li>
+        <li><a href="https://tradingeconomics.com/united-states/interest-rate" target="_blank">Trading Economics — US Fed Funds Interest Rate</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ 每周 ============ -->
+  <section class="panel" id="panel-weekly">
+    <div class="period-title">2026 年 7 月 27 日 – 8 月 1 日（上週交易週）</div>
+
+    <div class="tldr">
+      <h2>📌 重點摘錄</h2>
+      <ul>
+        <li>本週主軸是強勁科技財報帶動的「資金輪動」：資金從半導體股流出、轉入其他板塊。</li>
+        <li>道瓊連 3 個交易日走高，週五收在 52,485.03；Nasdaq 週五單日大漲 1%。</li>
+        <li>白宮對數十個貿易夥伴發動新一輪關稅（取代被最高法院推翻的舊關稅），並威脅對加拿大課徵 50% 關稅。</li>
+        <li>川普在沙國核能協議上態度反覆，同時對伊朗發出更多威脅；紅海航運遇襲推升油價一度衝破每桶 100 美元。</li>
+        <li>週末（8/1-8/2）川普宣布喊停對伊朗的攻擊計畫，為週一（8/3）的市場大漲鋪路。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>📈 本週美股走勢</h2>
+      <table class="daytable">
+        <tr><th>日期</th><th>道瓊</th><th>S&amp;P 500</th><th>那斯達克</th><th>備註</th></tr>
+        <tr><td>7/27（一）</td><td class="up">52,210.08 (+0.51%)</td><td class="up">7,413.18 (+0.02%)</td><td class="down">24,932.08 (-0.18%)</td><td>Nvidia 重挫 5% 拖累那指</td></tr>
+        <tr><td>7/28（二）</td><td class="up">52,747.32 (+1.03%)</td><td class="up">7,428.78 (+0.21%)</td><td class="down">24,876.91 (-0.22%)</td><td>財報強勁、油價下跌、資金轉出半導體</td></tr>
+        <tr><td>7/31（五）</td><td class="up">52,485.03 (+0.53%)</td><td class="up">7,489.72 (+0.7%)</td><td class="up">25,373.85 (+1.0%)</td><td>Amazon 財報帶動大漲，道瓊連 4 個月收紅</td></tr>
+      </table>
+      <p>整週呈現「科技財報行情」：獲利優於預期的大型科技股撐盤，但半導體類股（以 Nvidia 為代表）遭獲利了結，資金轉向其他成長板塊。</p>
+    </div>
+
+    <div class="card">
+      <h2>🇺🇸 總統與政策動態</h2>
+      <ul>
+        <li><strong>關稅：</strong>白宮以「打擊強迫勞動」為由，對約 60 個國家推出新一輪 Section 301 關稅，覆蓋約 9,490 億美元（28%）進口商品，取代 2 月被最高法院推翻的 Section 122 關稅；並揚言 30 天內對加拿大多數商品課徵 50% 關稅。</li>
+        <li><strong>伊朗與中東：</strong>川普在沙烏地核能協議上立場搖擺（協議被曝需沙國與以色列關係正常化），同時對伊朗發出更多威脅；因紅海航運遇襲，油價一度衝破每桶 100 美元，川普加派兵力至中東。</li>
+        <li><strong>加薩：</strong>以色列右翼政府與川普設立的「和平委員會（Board of Peace）」在加薩未來走向上出現分歧。</li>
+        <li><strong>司法部長人事：</strong>Camp David 內閣會議中，川普談及 Todd Blanche 的司法部長提名受阻，稱若參院無法確認將維持其代理身分，並考慮推動 18 億美元「反武器化基金」立法。</li>
+        <li><strong>其他：</strong>白宮要求追加 1,000 萬美元用於「Freedom 250」國慶活動。</li>
+      </ul>
+    </div>
+
+    <div class="card sources">
+      <h2>🔗 資料來源</h2>
+      <ol>
+        <li><a href="https://www.cnbc.com/2026/07/30/stock-market-today-live-updates.html" target="_blank">CNBC — S&amp;P 500 closes higher Friday as Amazon surges</a></li>
+        <li><a href="https://www.washingtonpost.com/business/2026/07/27/wall-street-stocks-dow-nasdaq/504db546-89f8-11f1-8912-d71e69d679d7_story.html" target="_blank">Washington Post — How major US stock indexes fared Monday 7/27</a></li>
+        <li><a href="https://www.nbcnews.com/politics/trump-administration/live-blog/trump-congress-2026-midterm-iran-ukraine-doj-dhs-ice-live-updates-rcna588796" target="_blank">NBC News — White House announces wave of new tariffs</a></li>
+        <li><a href="https://www.usnews.com/news/national-news/articles/2026-07-24/todays-news-new-trump-tariffs-u-s-iran-troops-oil-tops-100" target="_blank">U.S. News — New Trump tariffs, Iran troops, oil tops $100</a></li>
+        <li><a href="https://www.washingtonpost.com/politics/interactive/2026/07/25/trumps-world-cup-week-ends-foreign-policy-turbulence/" target="_blank">Washington Post — Trump's World Cup week ends in foreign policy turbulence</a></li>
+        <li><a href="https://www.npr.org/2026/07/30/nx-s1-5913172/freedom-250-july-fourth-10-million" target="_blank">NPR — Administration wants $10M more for July Fourth celebrations</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ 每月 ============ -->
+  <section class="panel" id="panel-monthly">
+    <div class="period-title">2026 年 7 月</div>
+
+    <div class="tldr">
+      <h2>📌 重點摘錄</h2>
+      <ul>
+        <li>那斯達克 7 月重挫近 3%，為今年 3 月以來最差月表現，且連續第 2 個月下跌；道瓊逆勢收紅（+0.3%），寫下連 4 個月上漲紀錄。</li>
+        <li>「AI 交易」不再是穩賺不賠的單向賭注，動能策略反轉為拖累——高盛「高 Beta 動能」籃子創 2000 年 11 月以來最差單月表現。</li>
+        <li>公債殖利率飆升：30 年期殖利率衝上 5.25%（2007 年以來新高），10 年期突破 4.7%（2025 年 1 月以來新高）。</li>
+        <li>白宮於 7/24 對 60 國祭出新關稅（取代到期的 Section 122 關稅），並威脅對加拿大課 50% 關稅。</li>
+        <li>中東緊張推升油價一度破百美元；月底川普喊停對伊朗攻擊計畫，為 8 月開局的大漲鋪路。</li>
+        <li>月底 Amazon 財報優於預期（雲端業務強勁），帶動月末反彈作收。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>📈 7 月美股表現</h2>
+      <div class="index-grid">
+        <div class="index-box"><div class="name">S&amp;P 500（月收）</div><div class="val">7,489.72</div><div class="chg down">▼ 約 -0.1%~-0.2%　持平略跌</div></div>
+        <div class="index-box"><div class="name">那斯達克綜合指數</div><div class="val">25,373.85</div><div class="chg down">▼ 約 -3%　連 2 月下跌</div></div>
+        <div class="index-box"><div class="name">道瓊工業指數</div><div class="val">52,485.03</div><div class="chg up">▲ +0.3%　連 4 月收紅</div></div>
+      </div>
+      <h3>市場主題</h3>
+      <p>7 月是波動劇烈的一個月，投資人情緒明顯轉向。過去支撐大盤的「動能策略」由多年獲利轉為拖累，顯示市場風格正在切換。公債市場同步承壓，長天期殖利率創多年新高，對成長股估值形成壓力。月底 Amazon 財報亮眼（雲端業務優於預期）為市場注入一劑強心針，帶動月末反彈。</p>
+    </div>
+
+    <div class="card">
+      <h2>🇺🇸 總統與政策動態</h2>
+      <ul>
+        <li><strong>關稅重整：</strong>Section 122 關稅於 7/24 到期失效後，白宮隨即以「打擊強迫勞動」名義推出新的 Section 301 關稅，覆蓋約 9,490 億美元（28%）進口商品；並威脅 30 天內對加拿大課徵 50% 關稅。</li>
+        <li><strong>中東局勢：</strong>沙烏地核能協議談判反覆（被曝需沙國與以色列關係正常化為條件）；紅海航運遭攻擊推升油價破百美元，美方加派兵力至中東；月底川普宣布喊停對伊朗的攻擊計畫，轉向談判。</li>
+        <li><strong>加薩：</strong>以色列政府與川普設立的「和平委員會」在解除哈瑪斯武裝、以軍撤出時程上出現分歧。</li>
+        <li><strong>內政：</strong>司法部長提名人 Todd Blanche 在參院受阻（因「反武器化基金」爭議），川普考慮以立法方式推動；白宮追加國慶活動預算。</li>
+      </ul>
+    </div>
+
+    <div class="card sources">
+      <h2>🔗 資料來源</h2>
+      <ol>
+        <li><a href="https://www.goodreturns.in/lw/wealth/markets/us-stock-market-july-recap-nasdaq-sp-500-dow-jones-wall-street-market-outlook-1525797.html" target="_blank">Goodreturns — Wall Street July Recap</a></li>
+        <li><a href="https://www.cnbc.com/2026/07/30/stock-market-today-live-updates.html" target="_blank">CNBC — Dow posts fourth straight winning month</a></li>
+        <li><a href="https://www.washingtonpost.com/business/2026/07/31/wall-street-stocks-dow-nasdaq/ee08da40-8d1d-11f1-8912-d71e69d679d7_story.html" target="_blank">Washington Post — How major US stock indexes fared Friday 7/31</a></li>
+        <li><a href="https://taxfoundation.org/research/all/federal/trump-tariffs-trade-war/" target="_blank">Tax Foundation — Tariff Tracker: 2026 Trump Tariffs</a></li>
+        <li><a href="https://www.nbcnews.com/politics/trump-administration/live-blog/trump-congress-2026-midterm-doj-ice-hamas-iran-live-updates-rcna590137" target="_blank">NBC News — Trump talks Blanche's AG nomination and Iran</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ 每季 ============ -->
+  <section class="panel" id="panel-quarterly">
+    <div class="period-title">2026 年第 2 季（4 月 – 6 月）</div>
+
+    <div class="tldr">
+      <h2>📌 重點摘錄</h2>
+      <ul>
+        <li>S&amp;P 500 單季大漲逾 15%，創 2020 年疫後反彈以來最強單季表現；那斯達克 100 同創同期最佳單季紀錄。</li>
+        <li>小型股（+22.57%）、新興市場（+24.02%）漲幅超越美國大型股（+10.21%），市場出現「範圍擴大」——不再只靠七大科技巨頭撐盤。</li>
+        <li>資訊科技類股領漲（+31.8%），僅能源（-13.5%）與公用事業（-0.5%）下跌。</li>
+        <li>聯準會領導層換血：Kevin Warsh 於 5 月正式就任 Fed 主席，重新聚焦 2% 通膨目標。</li>
+        <li>川普 4 月開除司法部長 Pam Bondi、提出 1.15 兆美元國防預算；白宮記者晚宴發生槍擊事件、川普緊急疏散。</li>
+        <li>6 月委內瑞拉發生強震，逾百棟建築倒塌；阿聯於 5 月宣布退出 OPEC。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>📈 第 2 季美股表現</h2>
+      <div class="index-grid">
+        <div class="index-box"><div class="name">S&amp;P 500（單季）</div><div class="val">+15.2%</div><div class="chg up">近 2020 年以來最佳單季</div></div>
+        <div class="index-box"><div class="name">美國小型股</div><div class="val">+22.57%</div><div class="chg up">領漲主要資產類別</div></div>
+        <div class="index-box"><div class="name">新興市場</div><div class="val">+24.02%</div><div class="chg up">國際資金明顯回流</div></div>
+      </div>
+      <h3>驅動因素</h3>
+      <p>地緣政治恐慌在本季消退、油價自高點回落，市場情緒明顯回暖。聯準會主席換人（Kevin Warsh 5 月接任）並重新強調抗通膨立場，成為總經敘事的重要轉折。科技股不再是唯一贏家，七大科技巨頭中僅 1 檔在第 2 季表現優於大盤，資金明顯擴散至中小型股與非美市場。</p>
+    </div>
+
+    <div class="card">
+      <h2>🇺🇸 總統與重大事件時間軸</h2>
+      <ul>
+        <li><strong>4/2：</strong>川普開除司法部長 Pam Bondi（因洩露敏感資訊）。</li>
+        <li><strong>4/3：</strong>提出 1.15 兆美元基本國防預算需求。</li>
+        <li><strong>4/12：</strong>副總統范斯自伊斯蘭馬巴德返美，談判未能達成協議。</li>
+        <li><strong>4/15：</strong>眾議院民主黨議員對國務卿提出 6 項彈劾條款。</li>
+        <li><strong>4/19：</strong>美國海軍陸戰隊扣押與伊朗有關的商船 M/V Touska。</li>
+        <li><strong>4/21：</strong>川普宣布延長與伊朗的停火協議。</li>
+        <li><strong>4/25：</strong>白宮記者協會晚宴發生槍擊事件，川普遭緊急疏散。</li>
+        <li><strong>5/1：</strong>阿拉伯聯合大公國宣布退出 OPEC。</li>
+        <li><strong>5 月：</strong>Kevin Warsh 正式就任聯準會主席。</li>
+        <li><strong>5/21：</strong>剛果民主共和國爆發伊波拉疫情。</li>
+        <li><strong>6/24：</strong>委內瑞拉西北部發生地震，逾百棟建築倒塌。</li>
+      </ul>
+    </div>
+
+    <div class="card sources">
+      <h2>🔗 資料來源</h2>
+      <ol>
+        <li><a href="https://finance.yahoo.com/markets/stocks/articles/stock-market-performed-second-quarter-093000453.html" target="_blank">Yahoo Finance — How the Stock Market Performed in Q2 2026</a></li>
+        <li><a href="https://novelinvestor.com/2026-q2-returns/" target="_blank">Novel Investor — 2026 Q2 Returns</a></li>
+        <li><a href="https://www.kiplinger.com/investing/how-the-stock-market-performed-in-q2-2026" target="_blank">Kiplinger — How the Stock Market Performed in Q2 2026</a></li>
+        <li><a href="https://en.wikipedia.org/wiki/Timeline_of_the_second_Trump_presidency_(2026_Q2)" target="_blank">Wikipedia — Timeline of the second Trump presidency (2026 Q2)</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ 半年 ============ -->
+  <section class="panel" id="panel-halfyear">
+    <div class="period-title">2026 年上半年（1 月 – 6 月）</div>
+
+    <div class="tldr">
+      <h2>📌 重點摘錄</h2>
+      <ul>
+        <li>S&amp;P 500 上半年總報酬約 +10.2%（第 1 季 -4.3%，第 2 季 +15.2%），走出「先蹲後跳」格局；指數期間首度突破 7,600 點。</li>
+        <li>那斯達克上半年 +12.8%、道瓊 +8.9%，企業獲利強勁支撐估值——S&amp;P 500 每股盈餘年增近 28%。</li>
+        <li>國際股市同步走強：新興市場 +22.7%、已開發市場（EAFE）+7.7%。</li>
+        <li>川普政府上半年動作頻繁：1 月對委內瑞拉發動空襲；2 月最高法院推翻 Section 122 關稅；3 月美以聯合空襲德黑蘭；4 月開除司法部長、記者晚宴槍擊事件；5 月新任 Fed 主席上任；6 月世界盃開踢、委內瑞拉強震。</li>
+        <li>全年背景：地緣政治不確定性升高、利率維持高檔、通膨疑慮未散，但企業獲利與 AI 投資熱潮支撐股市屢創新高。</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>📈 上半年美股表現</h2>
+      <div class="index-grid">
+        <div class="index-box"><div class="name">S&amp;P 500（H1 總報酬）</div><div class="val">+10.2%</div><div class="chg up">Q1 -4.3% → Q2 +15.2%</div></div>
+        <div class="index-box"><div class="name">那斯達克</div><div class="val">+12.8%</div><div class="chg up">YTD</div></div>
+        <div class="index-box"><div class="name">道瓊工業指數</div><div class="val">+8.9%</div><div class="chg up">YTD</div></div>
+      </div>
+      <h3>基本面</h3>
+      <p>S&amp;P 500 成分股每股盈餘（EPS）上半年年增 27.93%，營收成長 11.71%，顯示企業獲利槓桿效益顯著，是支撐股市在地緣政治動盪下仍屢創新高的核心動能。國際市場同步受惠，新興市場（+22.7%）表現甚至優於美股。</p>
+    </div>
+
+    <div class="card">
+      <h2>🇺🇸 總統與重大事件時間軸</h2>
+      <ul>
+        <li><strong>1 月：</strong>川普下令空襲委內瑞拉首都卡拉卡斯，並警告哥倫比亞總統 Petro 恐面臨美方行動；美軍扣押一艘遭制裁油輪。參院推動跨黨派決議限制川普特定權力；國防部長 Hegseth 宣布將馬斯克 AI 技術整合進軍事行動。</li>
+        <li><strong>2 月：</strong>米蘭／科爾蒂納冬奧登場（2/6–22），挪威奪 41 面獎牌居冠；最高法院推翻川普政府的 Section 122 關稅。</li>
+        <li><strong>3 月：</strong>3/3 美以聯合空襲德黑蘭；3/27 白宮發布神秘預告影片，暗示 3/28 將有重大宣布。</li>
+        <li><strong>4 月：</strong>開除司法部長 Pam Bondi、提出 1.15 兆美元國防預算、延長對伊朗停火、白宮記者晚宴發生槍擊事件。</li>
+        <li><strong>5 月：</strong>阿聯退出 OPEC；Kevin Warsh 就任聯準會主席；剛果爆發伊波拉疫情。</li>
+        <li><strong>6 月：</strong>2026 世界盃足球賽開踢（首度擴軍至 48 隊，加拿大／墨西哥／美國聯合主辦）；委內瑞拉發生強震，逾百棟建築倒塌。</li>
+      </ul>
+    </div>
+
+    <div class="card sources">
+      <h2>🔗 資料來源</h2>
+      <ol>
+        <li><a href="https://www.fool.com/investing/2026/07/08/sp-500-return-first-half-2026-history-says-next/" target="_blank">The Motley Fool — S&amp;P 500 Returned 10% in the First Half of 2026</a></li>
+        <li><a href="https://proactiveadvisormagazine.com/sp-500-update-market-breadth-improves-in-the-first-half-of-2026/" target="_blank">Proactive Advisor Magazine — Market breadth improves in H1 2026</a></li>
+        <li><a href="https://en.wikipedia.org/wiki/Timeline_of_the_second_Trump_presidency_(2026_Q1)" target="_blank">Wikipedia — Timeline of the second Trump presidency (2026 Q1)</a></li>
+        <li><a href="https://en.wikipedia.org/wiki/Timeline_of_the_second_Trump_presidency_(2026_Q2)" target="_blank">Wikipedia — Timeline of the second Trump presidency (2026 Q2)</a></li>
+        <li><a href="https://en.wikipedia.org/wiki/Portal:Current_events/June_2026" target="_blank">Wikipedia — Portal:Current events/June 2026</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>由 Claude 於 2026/08/03 彙整産生，內容為新聞摘要非投資建議。</footer>
+</div>
+
+<script>
+  var buttons = document.querySelectorAll('.tabbtn');
+  var panels = { daily: 'panel-daily', weekly: 'panel-weekly', monthly: 'panel-monthly', quarterly: 'panel-quarterly', halfyear: 'panel-halfyear' };
+  buttons.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      buttons.forEach(function(b) { b.classList.remove('active'); });
+      Object.values(panels).forEach(function(id) { document.getElementById(id).classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById(panels[btn.dataset.tab]).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
